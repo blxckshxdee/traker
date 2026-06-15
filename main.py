@@ -1,14 +1,11 @@
 # НАСТРОЙКА МОБИЛЬНОГО ДВИЖКА (СТРОГО В САМЫЙ ВЕРХ ФАЙЛА)
-from kivy.config import Config
-Config.set('input', 'mouse', 'mouse') # Намертво отключаем красные точки мультитача
-
 import json
 import os
 import random
 import shutil
 from datetime import datetime, timedelta
 
-# Кроссплатформенные компоненты Kivy
+# Чистые мобильные компоненты Kivy
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
@@ -24,6 +21,8 @@ from kivy.uix.scatter import Scatter
 from kivy.uix.stencilview import StencilView
 from kivy.graphics import Color, Rectangle
 from PIL import Image as PILImg
+
+# СТРОГИЙ МОБИЛЬНЫЙ ФИКС: Убрали Config мыши, Window.size и winreg!
 
 DATA_FILE = "tracker_data.json"
 
