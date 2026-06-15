@@ -1369,7 +1369,7 @@ class LifeRPGApp(App):
         # Создаем папку для вечного хранения картинок, если её ещё нет
         if not os.path.exists("custom_images"):
             os.makedirs("custom_images")
-
+            
         data = DataManager.load_data()
         self.days_clean = data["days"]
         self.coins = data["coins"]
@@ -1379,21 +1379,22 @@ class LifeRPGApp(App):
         self.shop_limits = data.get("shop_limits", {})
         self.custom_rewards = data.get("custom_rewards", [])
         self.custom_history = data.get("custom_history", [])
-
-        # Заморозка времени для всех трех таймеров отдыха с диска
+        
+        # Восстанавливаем таймеры отдыха с диска
         self.game_time_left = data.get("game_time_left", 0)
         self.series_time_left = data.get("series_time_left", 0)
         self.youtube_time_left = data.get("youtube_time_left", 0)
 
-        # Запуск фонового таймера без компьютерных пушей Windows
+        # СТРОГИЙ МОБИЛЬНЫЙ ФИКС: Весь код pystray и трея Windows полностью удален!
         Clock.schedule_interval(self.check_timer, 1)
-
+        
         sm = ScreenManager()
         sm.add_widget(MenuScreen(name='menu'))
         sm.add_widget(TasksScreen(name='tasks'))
         sm.add_widget(ShopScreen(name='shop'))
         sm.add_widget(CustomRewardsScreen(name='custom_rewards'))
         return sm
+
 
     def save_all_data(self):
         """Полное намертво сохранение всех трех счетчиков и сейфа на жесткий диск"""
