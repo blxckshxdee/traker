@@ -13,14 +13,10 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install System Dependencies
+      - name: Set Java Home Environment
         run: |
-          # ФИКС ОШИБКИ 100: Игнорируем упавшие сервера обновлений Ubuntu и идем дальше
-          sudo apt-get update --allow-releaseinfo-change || true
-          sudo apt-get install -y --fix-missing python3-pip build-essential git ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev
-          sudo apt-get install -y --fix-missing libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav libgstreamer-plugins-base1.0-dev
-          sudo apt-get install -y openjdk-17-jdk unzip
-          echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> $GITHUB_ENV
+          # Используем уже готовую, предустановленную Java 17 в GitHub Actions
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> $GITHUB_ENV
 
       - name: Install Buildozer and Cython
         run: |
@@ -32,6 +28,7 @@ jobs:
           if [ ! -f buildozer.spec ]; then
             buildozer init
           fi
+          # Настраиваем чистую сборку без Pillow
           sed -i 's/#\? \?requirements =.*/requirements = python3,kivy/g' buildozer.spec
           sed -i 's/#\? \?android.api =.*/android.api = 33/g' buildozer.spec
           sed -i 's/#\? \?android.minapi =.*/android.minapi = 24/g' buildozer.spec
