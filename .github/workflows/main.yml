@@ -1,13 +1,50 @@
-name: Build APK
+name: Build Mobile APK
 on: [push, workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
-      - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v5
         with:
-          workdir: .
-          
+          python-version: '3.10'
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip build-essential git ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev
+          sudo apt-get install -y libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav libgstreamer-plugins-base1.0-dev
+          sudo apt-get install -y openjdk-17-jdk unzip
+          echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> $GITHUB_ENV
+
+      - name: Install Buildozer and Cython
+        run: |
+          pip install --upgrade pip
+          pip install --upgrade buildozer cython==0.29.36 setuptools virtualenv
+
+      - name: Auto Configuration Spec File
+        run: |
+          # Если файла buildozer.spec нет, создаем его автоматически
+          if [ ! -f buildozer.spec ]; then
+            buildozer init
+          fi
+          # Прописываем стабильные и быстрые настройки сборки без Pillow
+          sed -i 's/#\? \?requirements =.*/requirements = python3,kivy/g' buildozer.spec
+          sed -i 's/#\? \?android.api =.*/android.api = 33/g' buildozer.spec
+          sed -i 's/#\? \?android.minapi =.*/android.minapi = 24/g' buildozer.spec
+          sed -i 's/#\? \?android.ndk =.*/android.ndk = 25b/g' buildozer.spec
+          sed -i 's/#\? \?p4a.branch =.*/p4a.branch = master/g' buildozer.spec
+
+      - name: Build APK with Buildozer
+        run: |
+          yes y | buildozer -v android debug
+
+      - name: Upload Finished APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tracker-Mobile-APK
+          path: bin/*.apk
