@@ -1,6 +1,11 @@
 name: Build Mobile APK
 on: [push, workflow_dispatch]
 
+# Убираем плашку предупреждения на серверах GitHub
+env:
+  FORCE_JUST_ACTIONS_TO_NODE24: 'true'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -15,7 +20,6 @@ jobs:
 
       - name: Set Java Home Environment
         run: |
-          # Используем уже готовую, предустановленную Java 17 в GitHub Actions
           echo "JAVA_HOME=$JAVA_HOME_17_X64" >> $GITHUB_ENV
 
       - name: Install Buildozer and Cython
@@ -28,7 +32,6 @@ jobs:
           if [ ! -f buildozer.spec ]; then
             buildozer init
           fi
-          # Настраиваем чистую сборку без Pillow
           sed -i 's/#\? \?requirements =.*/requirements = python3,kivy/g' buildozer.spec
           sed -i 's/#\? \?android.api =.*/android.api = 33/g' buildozer.spec
           sed -i 's/#\? \?android.minapi =.*/android.minapi = 24/g' buildozer.spec
