@@ -1,49 +1,73 @@
-name: Build Mobile APK
-on: [push, workflow_dispatch]
+name: Build Android APK
 
-# Убираем плашку предупреждения на серверах GitHub
-env:
-  FORCE_JUST_ACTIONS_TO_NODE24: 'true'
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Позволяет запускать сборку вручную
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Setup Python 3.10
-        uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
-      - name: Set Java Home Environment
+      - name: Install dependencies
         run: |
-          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> $GITHUB_ENV
+          python -m pip install --upgrade pip
+          pip install buildozer cython virtualenv
 
-      - name: Install Buildozer and Cython
+      - name: Install system dependencies
         run: |
-          pip install --upgrade pip
-          pip install --upgrade buildozer cython==0.29.36 setuptools virtualenv
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            git \
+            ffmpeg \
+            libsdl2-dev \
+            libsdl2-image-dev \
+            libsdl2-mixer-dev \
+            libsdl2-ttf-dev \
+            libportmidi-dev \
+            libswscale-dev \
+            libavformat-dev \
+            libavcodec-dev \
+            zlib1g-dev \
+            libgstreamer1.0 \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
+            openjdk-17-jdk \
+            autoconf \
+            automake \
+            libtool
 
-      - name: Auto Configuration Spec File
+      - name: Initialize Buildozer
         run: |
-          if [ ! -f buildozer.spec ]; then
-            buildozer init
-          fi
-          sed -i 's/#\? \?requirements =.*/requirements = python3,kivy/g' buildozer.spec
-          sed -i 's/#\? \?android.api =.*/android.api = 33/g' buildozer.spec
-          sed -i 's/#\? \?android.minapi =.*/android.minapi = 24/g' buildozer.spec
-          sed -i 's/#\? \?android.ndk =.*/android.ndk = 25b/g' buildozer.spec
-          sed -i 's/#\? \?p4a.branch =.*/p4a.branch = master/g' buildozer.spec
+          buildozer init
+          # Настройка buildozer.spec для Android
+          sed -i 's/title = My Application/title = LifeRPG/' buildozer.spec
+          sed -i 's/package.name = myapp/package.name = liferpg/' buildozer.spec
+          sed -i 's/package.domain = org.test/package.domain = org.liferpg/' buildozer.spec
+          sed -i 's/# requirements = python3/requirements = python3, kivy==2.2.1, pillow, plyer/' buildozer.spec
+          sed -i 's/# android.permissions = /android.permissions = INTERNET, VIBRATE, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE/' buildozer.spec
+          sed -i 's/# android.api = 27/android.api = 33/' buildozer.spec
+          sed -i 's/# android.minapi = 21/android.minapi = 21/' buildozer.spec
+          sed -i 's/# android.ndk = 25b/android.ndk = 25b/' buildozer.spec
+          sed -i 's/# p4a.branch = master/p4a.branch = master/' buildozer.spec
 
-      - name: Build APK with Buildozer
-        run: |
-          yes y | buildozer -v android debug
+      - name: Build APK
+        run: buildozer android debug
+        env:
+          P4A_RELEASE_KEYSTORE: "" # Для отладочной версии не требуется
 
-      - name: Upload Finished APK Artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: Tracker-Mobile-APK
+          name: LifeRPG-Debug-APK
           path: bin/*.apk
